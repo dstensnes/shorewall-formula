@@ -1,7 +1,14 @@
 # !!! FILE MANAGED BY SALT !!!
-
-#BAND         PROTO         PORT(S)         ADDRESS             INTERFACE        HELPER
-
+#
+# Shorewall version {{ pkg_version }} -- /etc/shorewall/tcpri
+#
+# For information about entries in this file, type "man shorewall-tcpri"
+#
+# See http://shorewall.net/simple_traffic_shaping.htm for additional
+# information.
+#
+###############################################################################
+#BAND	PROTO	PORT		ADDRESS		INTERFACE	HELPER
 {%- for rule in salt['pillar.get']('shorewall:tcpri', {}) %}
 {#- skip if ip version does not match #}
 {%-   if rule.ipv is defined and rule.ipv != ipv %}{% continue %}{% endif %}

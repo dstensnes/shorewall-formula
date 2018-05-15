@@ -22,14 +22,14 @@ shorewall_v{{ v }}:
   pkg:
     - installed
     - name: {{ pkg }}
-  service.running:
-    - name: {{ service }}
-    - enable: True
+#  service.running:
+#    - name: {{ service }}
+#    - enable: True
 
 # Create config files
 {%-    for config in map.config_files %}
 # NAT is not possible for IPv6, see http://shorewall.net/IPv6Support.html
-{%-      if config == 'masq' and v == 6 %}{% continue %}{% endif %}
+{%-      if config == 'snat' and v == 6 %}{% continue %}{% endif %}
 # Interfaces for traffic shaping should be declared only once, see http://shorewall.net/simple_traffic_shaping.html
 {%-      if config == 'tcinterfaces' and v == 6 %}{% continue %}{% endif %}
 {%-      if config == 'tcdevices' and v == 6 %}{% continue %}{% endif %}

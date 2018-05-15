@@ -1,6 +1,13 @@
 # !!! FILE MANAGED BY SALT !!!
-
-#INTERFACE  MARK  RATE    CEIL      PRIORITY    OPTIONS
+#
+# Shorewall version {{ pkg_version }} -- /etc/shorewall/tcclasses
+#
+# For information about entries in this file, type "man shorewall-tcclasses"
+#
+# See http://shorewall.net/traffic_shaping.htm for additional information.
+#
+###############################################################################
+#INTERFACE	MARK	RATE		CEIL		PRIO	OPTIONS
 
 {%- for rule in salt['pillar.get']('shorewall:tcclasses', {}) %}
 {#- skip if ip version does not match #}

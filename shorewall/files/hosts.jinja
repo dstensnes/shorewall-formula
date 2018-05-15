@@ -1,0 +1,23 @@
+# !!! FILE MANAGED BY SALT !!!
+#
+# Shorewall version {{ pkg_version }} -- /etc/shorewall/hosts
+#
+# For information about entries in this file, type "man shorewall-hosts"
+#
+# The manpage is also online at
+# http://www.shorewall.net/manpages/shorewall-hosts.html
+#
+###############################################################################
+#ZONE		HOSTS				OPTIONS
+{%- for zone in salt['pillar.get']('shorewall:zones', []) %}
+{%-   if zone.name is not defined -%}{%- continue -%}{%- endif -%}
+{#    skip if ip version does not match #}
+{%-   if zone.ipv is defined and zone.ipv != ipv -%}{%- continue -%}{%- endif -%}
+{%-   for host in zone.get('hosts', []) %}
+{#      skip if ip version does not match #}
+{%-     if host.ipv is defined and host.ipv != ipv -%}{%- continue -%}{%- endif -%}
+{%-     if host.interface is not defined -%}{%- continue -%}{%- endif -%}
+
+{{ zone.name }}       {{ host.interface }}:{{ host.address }}  {{ host.get('options', '') }}
+{%-   endfor %}
+{%- endfor %}

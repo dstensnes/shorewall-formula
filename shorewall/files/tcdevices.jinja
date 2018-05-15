@@ -1,6 +1,14 @@
 # !!! FILE MANAGED BY SALT !!!
+#
+# Shorewall version {{ pkg_version }} -- /etc/shorewall/tcdevices
+#
+# For information about entries in this file, type "man shorewall-tcdevices"
+#
+# See http://shorewall.net/traffic_shaping.htm for additional information.
+#
+###############################################################################
+#INTERFACE	IN_BANDWITH	OUT_BANDWIDTH	OPTIONS		REDIRECT
 
-#INTERFACE          IN-BANDWIDTH        OUT-BANDWIDTH
 
 {%- for rule in salt['pillar.get']('shorewall:tcdevices', {}) %}
 {#- skip if ip version does not match #}

@@ -1,6 +1,6 @@
 # !!! FILE MANAGED BY SALT !!!
 #
-# Shorewall version {{ pkg_version }} - Tunnels File
+# Shorewall version {{ pkg_version }} -- /etc/shorewall/tunnels
 #
 # For information about entries in this file, type "man shorewall-tunnels"
 #
@@ -8,8 +8,7 @@
 # http://www.shorewall.net/manpages/shorewall-tunnels.html
 #
 ###############################################################################
-#TYPE			ZONE	GATEWAY(S)			GATEWAY
-#
+#TYPE			ZONE		GATEWAY			GATEWAY_ZONE
 {%- for tunnels in salt['pillar.get']('shorewall:tunnels', {}) %}
 {# skip if ip version does not match #}
 {%-   if tunnels.ipv is defined and tunnels.ipv != ipv %}{% continue %}{%endif %}

@@ -1,6 +1,14 @@
 # !!! FILE MANAGED BY SALT !!!
-
-#INTERFACE             TYPE          IN-BANDWIDTH        OUT-BANDWIDTH
+#
+# Shorewall version {{ pkg_version }} -- /etc/shorewall/tcinterfaces
+#
+# For information about entries in this file, type "man shorewall-tcinterfaces"
+#
+# See http://shorewall.net/simple_traffic_shaping.htm for additional
+# information.
+#
+###############################################################################
+#INTERFACE	TYPE		IN_BANDWIDTH		OUT_BANDWIDTH
 
 {%- for rule in salt['pillar.get']('shorewall:tcinterfaces', {}) %}
 {#- skip if ip version does not match #}

@@ -1,33 +1,15 @@
 # !!! FILE MANAGED BY SALT !!!
 #
-# Shorewall version {{ pkg_version }} -- /etc/shorewall/rules
+# Shorewall version {{ pkg_version }} -- /etc/shorewall/blrules
 #
-# For information on the settings in this file, type "man shorewall-rules"
+# For information about entries in this file, type "man shorewall-blrules"
 #
-# The manpage is also online at
-# http://www.shorewall.net/manpages/shorewall-rules.html
+# Please see http://shorewall.net/blacklisting_support.htm for additional
+# information.
 #
 ##############################################################################################################################################################
 #ACTION		SOURCE		DEST		PROTO	DPORT	SPORT	ORIGDEST	RATE	USER	MARK	CONNLIMIT	TIME	HEADERS	SWITCH	HELPER
-
-?SECTION ALL
-?SECTION ESTABLISHED
-?SECTION RELATED
-?SECTION INVALID
-?SECTION UNTRACKED
-?SECTION NEW
-{%- if pkg_version|float() >= 4.6 %}
-  {% set section = '?SECTION' %}
-  {% set sections = ['ALL', 'ESTABLISHED', 'RELATED', 'INVALID', 'UNTRACKED', 'NEW'] %}
-{%- else %}
-  {% set section = 'SECTION' %}
-  {% set sections = ['ALL', 'ESTABLISHED', 'RELATED', 'NEW'] %}
-{%- endif %}
-
-{%- for name in sections %}
-### START OF SECTION {{ name }}
-{{ section }} {{ name }}
-{%- for rule in salt['pillar.get']('shorewall:rules:' + name, []) %}
+{%- for rule in salt['pillar.get']('shorewall:blrules', []) %}
 {# skip if ip version does not match #}
 {%-   if rule.ipv is defined and rule.ipv != ipv %}{% continue %}{% endif %}
 {%-   if rule is string %}
@@ -37,6 +19,3 @@
 {{ rule.get('action') }}  {{ rule.get('source', 'none') }}  {{ rule.get('dest', 'none') }}  {{ rule.get('proto', '-') }}  {{ rule.get('dport', '-') }}  {{ rule.get('sport', '-') }}  {{ rule.get('originaldest', '-') }}  {{ rule.get('ratelimit', '-') }}  {{ rule.get('usergroup', '-') }}  {{ rule.get('mark', '-') }}  {{ rule.get('connlimit', '-') }}  {{ rule.get('time', '-') }}  {{ rule.get('headers', '-') }}  {{ rule.get('switch', '') }}
 {%- endif %}
 {%- endfor %}
-### END OF SECTION {{ name }}
-
-{% endfor %}

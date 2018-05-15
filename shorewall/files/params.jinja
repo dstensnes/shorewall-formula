@@ -72,5 +72,12 @@
 
 {%- endfor %}
 
+{%- set default_route = salt['network.default_route']()[0] -%}
+
+{%- if default_route %}
+INET_IF={{ default_route.interface }}
+{%- endif %}
+
+
 #LAST LINE -- DO NOT REMOVE
 

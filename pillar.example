@@ -16,7 +16,7 @@ shorewall:
     - macro.SaltMaster
 
   zones:
-    mgmt:
+    - name: mgmt
       ipv: 4                        # This controls if this item is used for ipv4 and/or ipv6 shorewall. Omit for both.
       type: ipv4
       options:
@@ -24,6 +24,11 @@ shorewall:
       out_options:
       comment:
       interfaces:
+        $INET_IF:
+          ipv: 4
+          broadcast: detect
+          options: tcpflags,logmartians,nosmurfs
+          comment:
         eth0:
           ipv: 4
           broadcast: detect
@@ -64,15 +69,18 @@ shorewall:
       comment: Allow connections to saltmaster
       # No ipv is given here          # Rule for ipv4 and ipv6
 
-  masq:
-    - interface: eth0
-      source:   '10.100.200.45/29'
-      address: '2.2.3.3'
+  snat:
+    - action: MASQUERADE
+      source: '10.100.200.45/29'
+      dest: eth0
       ipv: 4
 
-  routestopped:
-    - interface: eth0
-      host: '25.6.7.8'
+  stoppedrules:
+    - action: ACCEPT
+      source: '25.6.7.8'
+      dest: fw
+      proto: tcp
+      dport: 22
       ipv: 4
 
   params:
