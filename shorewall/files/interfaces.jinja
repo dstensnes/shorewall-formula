@@ -7,28 +7,24 @@
 # The manpage is also online at
 # http://www.shorewall.net/manpages/shorewall-interfaces.html
 #
-?FORMAT 2
 ###############################################################################
 #ZONE		INTERFACE		OPTIONS
 {%- if pkg_version|float() >= 4.6 %}
-  {% set format = '?FORMAT' %}
-{%- else %}
-  {% set format = 'FORMAT' %}
+  {% set format = '?FORMAT' -%}
+{%- else -%}
+  {% set format = 'FORMAT' -%}
 {%- endif %}
 {{ format }} 2
-###############################################################################
-#ZONE   INTERFACE       OPTIONS
-
-{%- for zone in salt['pillar.get']('shorewall:zones', []) %}
-{%-   if zone.name is not defined %}{% continue %}{% endif %}
+{%- for zone in salt['pillar.get']('shorewall:zones', []) -%}
+{%-   if zone.name is not defined -%}{%- continue -%}{%- endif -%}
 {#    skip if ip version does not match #}
-{%-   if zone.ipv is defined and zone.ipv != ipv %}{% continue %}{%endif %}
-{%-   for interface, interface_data in zone.get('interfaces', {}).iteritems() %}
+{%-   if zone.ipv is defined and zone.ipv != ipv -%}{%- continue -%}{%-endif -%}
+{%-   for interface in zone.get('interfaces', []) -%}
 {#      skip if ip version does not match #}
-{%-     if interface_data.ipv is defined and interface_data.ipv != ipv %}{% continue %}{%endif %}
+{%-     if interface.ipv is defined and interface.ipv != ipv -%}{%- continue -%}{%- endif %}
 
-# {{ interface }}
-# {{ interface_data.comment if interface_data.comment is defined else '' }}
-{{ zone.name }}  {{ interface }}  {{ interface_data.get('options', '') }}
+# {{ interface.name }}
+# {{ interface.comment if interface.comment is defined else '' }}
+{{ zone.name }}  {{ interface.name }}  {{ interface.get('options', '') }}
 {%-   endfor %}
 {%- endfor %}

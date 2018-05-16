@@ -17,7 +17,6 @@
 {#      skip if ip version does not match #}
 {%-     if host.ipv is defined and host.ipv != ipv -%}{%- continue -%}{%- endif -%}
 {%-     if host.interface is not defined -%}{%- continue -%}{%- endif -%}
-
 {{ zone.name }}       {{ host.interface }}:{{ host.address }}  {{ host.get('options', '') }}
 {%-   endfor %}
 {%- endfor %}

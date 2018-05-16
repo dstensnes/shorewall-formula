@@ -9,34 +9,31 @@
 #
 ##############################################################################################################################################################
 #ACTION		SOURCE		DEST		PROTO	DPORT	SPORT	ORIGDEST	RATE	USER	MARK	CONNLIMIT	TIME	HEADERS	SWITCH	HELPER
-
-?SECTION ALL
-?SECTION ESTABLISHED
-?SECTION RELATED
-?SECTION INVALID
-?SECTION UNTRACKED
-?SECTION NEW
 {%- if pkg_version|float() >= 4.6 %}
   {% set section = '?SECTION' %}
-  {% set sections = ['ALL', 'ESTABLISHED', 'RELATED', 'INVALID', 'UNTRACKED', 'NEW'] %}
+  {% set sections = ['ALL', 'NEW', 'ESTABLISHED', 'RELATED', 'INVALID', 'UNTRACKED'] %}
 {%- else %}
   {% set section = 'SECTION' %}
-  {% set sections = ['ALL', 'ESTABLISHED', 'RELATED', 'NEW'] %}
+  {% set sections = ['ALL', 'NEW', 'ESTABLISHED', 'RELATED'] %}
 {%- endif %}
 
 {%- for name in sections %}
+{%-   set rules = salt['pillar.get']('shorewall:rules:' + name.lower(), []) -%}
+{%-   if not rules -%}{%- continue -%}{%- endif %}
+
 ### START OF SECTION {{ name }}
 {{ section }} {{ name }}
-{%- for rule in salt['pillar.get']('shorewall:rules:' + name, []) %}
-{# skip if ip version does not match #}
-{%-   if rule.ipv is defined and rule.ipv != ipv %}{% continue %}{% endif %}
-{%-   if rule is string %}
+{%-   for rule in rules %}
+{#      skip if ip version does not match #}
+{%-     if rule.ipv is defined and rule.ipv != ipv -%}{%- continue -%}{%- endif -%}
+{%-     if rule is string %}
 {{ rule }}
-{%-   else %}
+{%-     else %}
 # {{ rule.get('comment', '') }}
 {{ rule.get('action') }}  {{ rule.get('source', 'none') }}  {{ rule.get('dest', 'none') }}  {{ rule.get('proto', '-') }}  {{ rule.get('dport', '-') }}  {{ rule.get('sport', '-') }}  {{ rule.get('originaldest', '-') }}  {{ rule.get('ratelimit', '-') }}  {{ rule.get('usergroup', '-') }}  {{ rule.get('mark', '-') }}  {{ rule.get('connlimit', '-') }}  {{ rule.get('time', '-') }}  {{ rule.get('headers', '-') }}  {{ rule.get('switch', '') }}
-{%- endif %}
-{%- endfor %}
+{%-     endif -%}
+{%-   endfor %}
 ### END OF SECTION {{ name }}
 
-{% endfor %}
+{%- endfor -%}
+

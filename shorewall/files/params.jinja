@@ -25,7 +25,6 @@
 #               net     eth0            130.252.100.255 routefilter,norfc1918
 #
 ###############################################################################
-
 {# Renders a list (or list of lists) of IP addresses as Shorewall param format #}
 {%- macro render_list(list) -%}
 {%- set ip_list = [] -%}
@@ -44,40 +43,33 @@
   {%- endif -%}
 {{ ip_list|join(',') }}
 {%- endmacro -%}
-
 {%- for params in salt['pillar.get']('shorewall:params', {}) %}
 {# skip if ip version does not match #}
-{%-   if params.ipv is defined and params.ipv != ipv %}{% continue %}{%endif %}
-
+{%-   if params.ipv is defined and params.ipv != ipv -%}{%- continue -%}{%- endif %}
 # {{ params.get('comment', '') }}
-{%- if params.get('value') %}
+{%-   if params.get('value') %}
 {{ params.get('key') }}={{ params.get('value') }}
-
-{%- elif params.get('mine') -%}
-
-{%- set mine_target = params.get('mine').get('target') -%}
-{%- set mine_function = params.get('mine').get('function') -%}
-{%- set mine_expr_form = params.get('mine').get('expr_form') -%}
-{%- set default = params.get('default') -%}
-
-{%- set mine_result = salt['mine.get'](mine_target, mine_function, mine_expr_form).values() %}
-
+{%-   elif params.get('mine') -%}
+{%-     set mine_target = params.get('mine').get('target') -%}
+{%-     set mine_function = params.get('mine').get('function') -%}
+{%-     set mine_expr_form = params.get('mine').get('expr_form') -%}
+{%-     set default = params.get('default') -%}
+{%-     set mine_result = salt['mine.get'](mine_target, mine_function, mine_expr_form).values() %}
 {{ params.get('key') }}=
-{%- if mine_result -%}
+{%-     if mine_result -%}
 {{ render_list(mine_result) }}
-{%- else -%}
+{%-     else -%}
 {{ default }}
-{%- endif -%}
-{%- endif -%}
-
+{%-     endif -%}
+{%-   endif -%}
 {%- endfor %}
 
-{%- set default_route = salt['network.default_route']()[0] -%}
 
+# HARDCODED VARIABLES
+{%- set default_route = salt['network.default_route']() -%}
 {%- if default_route %}
-INET_IF={{ default_route.interface }}
+INET_IF={{ default_route[0].interface }}
 {%- endif %}
 
 
 #LAST LINE -- DO NOT REMOVE
-
