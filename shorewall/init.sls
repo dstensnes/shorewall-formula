@@ -22,9 +22,9 @@ shorewall_v{{ v }}:
   pkg:
     - installed
     - name: {{ pkg }}
-#  service.running:
-#    - name: {{ service }}
-#    - enable: True
+  service.running:
+    - name: {{ service }}
+    - enable: True
 
 # Create config files
 {%-    for config in map.config_files %}
