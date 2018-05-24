@@ -8,11 +8,23 @@
 # http://www.shorewall.net/manpages/shorewall-policy.html
 #
 ###############################################################################
-#SOURCE		DEST		POLICY	LOGLEVEL	LIMIT	CONNLIMIT
-{%- for policy in salt['pillar.get']('shorewall:policy', {}) %}
-{# skip if ip version does not match #}
-{%-   if policy.ipv is defined and policy.ipv != ipv %}{% continue %}{%endif %}
-
-# {{ policy.get('comment', '') }}
-{{ policy.get('source') }}    {{ policy.get('dest') }}    {{ policy.get('policy') }}    {{ policy.get('loglevel', '-') }}    {{ policy.get('burstlimit', '-') }}    {{ policy.get('connlimit', '') }}
+{{ "{:<22} {:<22} {:<20} {:<12} {:<15} {:<20}".format(
+'#SOURCE',
+'DEST',
+'POLICY',
+'LOGLEVEL',
+'BURSTLIMIT',
+'CONNLIMIT'
+) }}
+{%- for id, policy in salt['pillar.get']('shorewall:policy', {})|dictsort %}
+{%-   if policy.policy is not defined -%}{%- continue -%}{%endif -%}
+{%-   if policy.ipv is defined and ipv not in policy.ipv -%}{%- continue -%}{%- endif %}
+{{ "{:<22} {:<22} {:<20} {:<12} {:<15} {:<20}".format(
+policy.source,
+policy.dest,
+policy.policy,
+policy.loglevel|default('-'),
+policy.burstlimit|default('-'),
+policy.connlimit|default('')
+) }}	# [ID:{{ id }}] {{ policy.comment|default('') }}
 {%- endfor %}

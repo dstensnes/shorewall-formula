@@ -11,11 +11,23 @@
 # information.
 #
 ###############################################################################
-#ACTION		SOURCE			DEST		PROTO	DPORT	SPORT
-{%- for rule in salt['pillar.get']('shorewall:stoppedrules', []) %}
-{# skip if ip version does not match #}
-{%-   if rule.ipv is defined and rule.ipv != ipv %}{% continue %}{%endif %}
-
-# {{ rule.get('comment', '') }}
-{{ rule.get('action', 'ACCEPT') }}  {{ rule.get('source', '-') }}  {{ rule.get('dest', '-') }}  {{ rule.get('proto', '-') }}  {{ rule.get('dport', '-') }}  {{ rule.get('sport', '') }}
+{{ "{:<20} {:<22} {:<22} {:<10} {:<30} {:<20}".format(
+'#ACTION',
+'SOURCE',
+'DEST',
+'PROTO',
+'DPORT',
+'SPORT'
+) }}
+{%- for id, rule in salt['pillar.get']('shorewall:stoppedrules', {})|dictsort %}
+{%-   if rule.action is not defined -%}{%- continue -%}{%- endif -%}
+{%-   if rule.ipv is defined and ipv not in rule.ipv -%}{%- continue -%}{%- endif %}
+{{ "{:<20} {:<22} {:<22} {:<10} {:<30} {:<20}".format(
+rule.action|default('ACCEPT'),
+rule.source|default('-'),
+rule.dest|default('-'),
+rule.proto|default('-'),
+rule.dport|default('-'),
+rule.sport|default('-')
+) }}	# [ID:{{ id }}] {{ rule.comment|default('') }}
 {%- endfor %}

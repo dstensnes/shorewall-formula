@@ -8,16 +8,22 @@
 # http://www.shorewall.net/manpages/shorewall-zones.html
 #
 ###############################################################################
-#ZONE		TYPE		OPTIONS		IN_OPTIONS	OUT_OPTIONS
-fw      firewall
-{%- for zone in salt['pillar.get']('shorewall:zones', []) %}
-{# skip if ip version does not match #}
-{%-   if zone.ipv is defined and zone.ipv != ipv %}{% continue %}{%endif %}
-
-# {{ zone }}
-# {{ zone.comment if zone.comment is defined else ''}}
-
-{%-   if zone.name is defined %}
-{{ zone.name }}{{ ":" + zone.parent if zone.parent is defined else '' }}     {{ zone.get('type', 'ipv{0}'.format(ipv)) }}    {{ zone.get('options', '-') }}    {{ zone.get('in_options', '-') }}    {{ zone.get('out_options', '-') }}
-{%-   endif %}
+{{ "{:<20} {:<25} {:<25} {:<25} {:<25}".format(
+'#NAME[:PARENT]',
+'TYPE',
+'OPTIONS',
+'IN_OPTIONS',
+'OUT_OPTIONS',
+) }}
+{{ "{:<20} {:<25} {:<25} {:<25} {:<25}".format("fw", "firewall", '-', '-', '-') }}
+{%- for id, zone in salt['pillar.get']('shorewall:zones', {})|dictsort -%}
+{%-   if zone.name is not defined -%}{%- continue -%}{%- endif -%}
+{%-   if zone.ipv is defined and ipv not in zone.ipv -%}{%- continue -%}{%- endif %}
+{{ "{:<20} {:<25} {:<25} {:<25} {:<25}".format(
+zone.name + (":" + zone.parent if zone.parent is defined else ''),
+zone.type|default('ipv{0}'.format(ipv)),
+zone.options|default('-'),
+zone.in_options|default('-'),
+zone.out_options|default('-')
+) }}	# [ID:{{ id }}] {{ zone.comment if zone.comment is defined else ''}}
 {%- endfor %}

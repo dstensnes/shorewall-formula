@@ -8,15 +8,17 @@
 # http://www.shorewall.net/manpages/shorewall-hosts.html
 #
 ###############################################################################
-#ZONE		HOSTS				OPTIONS
-{%- for zone in salt['pillar.get']('shorewall:zones', []) %}
-{%-   if zone.name is not defined -%}{%- continue -%}{%- endif -%}
-{#    skip if ip version does not match #}
-{%-   if zone.ipv is defined and zone.ipv != ipv -%}{%- continue -%}{%- endif -%}
-{%-   for host in zone.get('hosts', []) %}
-{#      skip if ip version does not match #}
-{%-     if host.ipv is defined and host.ipv != ipv -%}{%- continue -%}{%- endif -%}
-{%-     if host.interface is not defined -%}{%- continue -%}{%- endif -%}
-{{ zone.name }}       {{ host.interface }}:{{ host.address }}  {{ host.get('options', '') }}
-{%-   endfor %}
+{{ "{:<10} {:<30} {:<50}".format(
+'#ZONE',
+'HOSTS',
+'OPTIONS'
+) }}
+{%- for id, data in salt['pillar.get']('shorewall:hosts', {})|dictsort -%}
+{%-   if data.address is not defined -%}{%- continue -%}{%- endif -%}
+{%-   if data.ipv is defined and ipv not in data.ipv -%}{%- continue -%}{%- endif %}
+{{ "{:<10} {:<30} {:<50}".format(
+data.zone,
+data.interface + ':' + data.address,
+data.options|default('')
+) }} # [ID:{{ id }}] {{ data.comment|default('') }}
 {%- endfor %}

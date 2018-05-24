@@ -8,11 +8,22 @@
 # information.
 #
 ###############################################################################
-#BAND	PROTO	PORT		ADDRESS		INTERFACE	HELPER
-{%- for rule in salt['pillar.get']('shorewall:tcpri', {}) %}
-{#- skip if ip version does not match #}
-{%-   if rule.ipv is defined and rule.ipv != ipv %}{% continue %}{% endif %}
-
-{{ rule.get('band') }}     {{ rule.get('proto', '-') }}     {{ rule.get('port', '-') }}     {{ rule.get('address', '-') }}     {{ rule.get('interface', '-') }}     {{ rule.get('helper', '-') }}
-
+{{ "{:<8} {:<8} {:<20} {:<20} {:<10} {:<15}".format(
+'#BAND',
+'PROTO',
+'PORT',
+'ADDRESS',
+'INTERFACE',
+'HELPER'
+) }}
+{%- for id, rule in salt['pillar.get']('shorewall:tcpri', {})|dictsort %}
+{%-   if rule.ipv is defined and ipv not in rule.ipv -%}{%- continue -%}{%- endif %}
+{{ "{:<8} {:<8} {:<20} {:<20} {:<10} {:<15}".format(
+rule.band,
+rule.proto|default('-'),
+rule.port|default('-'),
+rule.address|default('-'),
+rule.interface|default('-'),
+rule.helper|default('-')
+) }}	# [ID:{{ id }}] {{ rule.comment|default('') }}
 {%- endfor %}

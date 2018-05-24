@@ -8,14 +8,45 @@
 # information.
 #
 ##############################################################################################################################################################
-#ACTION		SOURCE		DEST		PROTO	DPORT	SPORT	ORIGDEST	RATE	USER	MARK	CONNLIMIT	TIME	HEADERS	SWITCH	HELPER
-{%- for rule in salt['pillar.get']('shorewall:blrules', []) %}
-{# skip if ip version does not match #}
-{%-   if rule.ipv is defined and rule.ipv != ipv %}{% continue %}{% endif %}
+{{ "{:<20}  {:<22} {:<22} {:<10} {:<30} {:<20} {:<20} {:<10} {:<15} {:<8} {:<15} {:<15} {:<15} {:<15} {:<15}".format(
+'#ACTION',
+'SOURCE',
+'DEST',
+'PROTO',
+'DPORT',
+'SPORT',
+'ORIGINALDEST',
+'RATELIMIT',
+'USERGROUP',
+'MARK',
+'CONNLIMIT',
+'TIME',
+'HEADERS',
+'SWITCH',
+'HELPER'
+) }}
+{%- for id, rule in salt['pillar.get']('shorewall:blrules', {})|dictsort %}
+{%-   if rule.action is not defined -%}{%- continue -%}{%- endif -%}
+{%-   if rule.ipv is defined and ipv not in rule.ipv -%}{%- continue -%}{%- endif -%}
 {%-   if rule is string %}
 {{ rule }}
 {%-   else %}
-# {{ rule.get('comment', '') }}
-{{ rule.get('action') }}  {{ rule.get('source', 'none') }}  {{ rule.get('dest', 'none') }}  {{ rule.get('proto', '-') }}  {{ rule.get('dport', '-') }}  {{ rule.get('sport', '-') }}  {{ rule.get('originaldest', '-') }}  {{ rule.get('ratelimit', '-') }}  {{ rule.get('usergroup', '-') }}  {{ rule.get('mark', '-') }}  {{ rule.get('connlimit', '-') }}  {{ rule.get('time', '-') }}  {{ rule.get('headers', '-') }}  {{ rule.get('switch', '') }}
+{{ "{:<20}  {:<22} {:<22} {:<10} {:<30} {:<20} {:<20} {:<10} {:<15} {:<8} {:<15} {:<15} {:<15} {:<15} {:<15}".format(
+rule.action,
+rule.source|default('none'),
+rule.dest|default('none'),
+rule.proto|default('-'),
+rule.dport|default('-'),
+rule.sport|default('-'),
+rule.originaldest|default('-'),
+rule.ratelimit|default('-'),
+rule.usergroup|default('-'),
+rule.mark|default('-'),
+rule.connlimit|default('-'),
+rule.time|default('-'),
+rule.headers|default('-'),
+rule.switch|default('-'),
+rule.helper|default('-')
+) }}	# [ID:{{ id }}] {{ rule.comment|default('') }}
 {%- endif %}
 {%- endfor %}

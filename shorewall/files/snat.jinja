@@ -7,16 +7,29 @@
 # See http://shorewall.net/manpages/shorewall-snat.html for more information
 #
 ###########################################################################################################################################
-#ACTION			SOURCE			DEST		PROTO	PORT	IPSEC	MARK	USER	SWITCH	ORIGDEST	PROBABILITY
-{%- for snat in salt['pillar.get']('shorewall:snat', []) %}
-{# skip if ip version does not match #}
-{%-   if snat.ipv is defined and snat.ipv != ipv %}{% continue %}{%endif %}
-
+{{ "{:<20} {:<22} {:<22} {:<10} {:<30} {:<15} {:<10}".format(
+'#ACTION',
+'SOURCE',
+'DEST',
+'PROTO',
+'PORTS',
+'IPSEC',
+'MARK'
+) }}
+{%- for id, snat in salt['pillar.get']('shorewall:snat', {})|dictsort %}
+{%-   if snat.action is not defined -%}{%- continue -%}{%- endif -%}
+{%-   if snat.ipv is defined and ipv not in snat.ipv -%}{%- continue -%}{%- endif -%}
 {%- if snat is string %}
 {{ snat }}
 {%- else %}
-# {{ snat.get('comment', '') }}
-# {{ snat }}
-{{ snat.get('action') }}  {{ snat.get('source', '-') }}  {{ snat.get('dest', '-') }}  {{ snat.get('proto', '-') }}  {{ snat.get('ports', '-') }}  {{ snat.get('ipsec', '-') }}  {{ snat.get('mark', '-') }}
-{%- endif %}
-{%- endfor %}
+{{ "{:<20} {:<22} {:<22} {:<10} {:<30} {:<15} {:<10}".format(
+snat.action,
+snat.source|default('-'),
+snat.dest|default('-'),
+snat.proto|default('-'),
+snat.ports|default('-'),
+snat.ipsec|default('-'),
+snat.mark|default('-')
+) }}	# [ID:{{id}}] {{ snat.comment|default('') }}
+{%- endif -%}
+{%- endfor -%}

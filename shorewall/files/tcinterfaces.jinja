@@ -8,12 +8,19 @@
 # information.
 #
 ###############################################################################
-#INTERFACE	TYPE		IN_BANDWIDTH		OUT_BANDWIDTH
-
-{%- for rule in salt['pillar.get']('shorewall:tcinterfaces', {}) %}
-{#- skip if ip version does not match #}
-{%-   if rule.ipv is defined and rule.ipv != ipv %}{% continue %}{% endif %}
-
-{{ rule.get('name') }}     {{ rule.get('type', '-') }}     {{ rule.get('in_bandwidth', '-') }}     {{ rule.get('out_bandwidth', '-') }} 
-
+{{ "{:<15} {:<15} {:<15} {:<15}".format(
+'#INTERFACE',
+'TYPE',
+'IN_BANDWIDTH',
+'OUT_BANDWIDTH'
+) }}
+{%- for id, rule in salt['pillar.get']('shorewall:tcinterfaces', {})|dictsort -%}
+{%-   if rule.interface is not defined -%}{%- continue -%}{%- endif -%}
+{%-   if rule.ipv is defined and ipv not in rule.ipv -%}{%- continue -%}{%- endif %}
+{{ "{:<15} {:<15} {:<15} {:<15}".format(
+rule.interface,
+rule.type|default('-'),
+rule.in_bandwidth|default('-'),
+rule.out_bandwidth|default('-')
+) }}	# [ID:{{ id }}] {{ rule.comment|default('') }}
 {%- endfor %}

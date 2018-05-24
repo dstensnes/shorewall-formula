@@ -7,13 +7,21 @@
 # See http://shorewall.net/traffic_shaping.htm for additional information.
 #
 ###############################################################################
-#INTERFACE	IN_BANDWITH	OUT_BANDWIDTH	OPTIONS		REDIRECT
-
-
-{%- for rule in salt['pillar.get']('shorewall:tcdevices', {}) %}
-{#- skip if ip version does not match #}
-{%-   if rule.ipv is defined and rule.ipv != ipv %}{% continue %}{% endif %}
-
-{{ rule.get('name') }}     {{ rule.get('in_bandwidth', '-') }}     {{ rule.get('out_bandwidth', '-') }} 
-
+{{ "{:<15} {:<15} {:<15} {:<25} {:<25}".format(
+'#INTERFACE',
+'IN_BANDWIDTH',
+'OUT_BANDWIDTH',
+'OPTIONS',
+'REDIRECT'
+) }}
+{%- for id, rule in salt['pillar.get']('shorewall:tcdevices', {})|dictsort -%}
+{%-   if rule.interface is not defined -%}{%- continue -%}{%- endif -%}
+{%-   if rule.ipv is defined and ipv not in rule.ipv -%}{%- continue -%}{%- endif %}
+{{ "{:<15} {:<15} {:<15} {:<25} {:<25}".format(
+rule.interface,
+rule.in_bandwidth|default('-'),
+rule.out_bandwidth|default('-'),
+rule.options|default('-'),
+rule.redirect|default('-')
+) }}	# [ID:{{ id }}] {{ rule.comment|default('') }}
 {%- endfor %}

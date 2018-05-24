@@ -8,15 +8,22 @@
 # http://www.shorewall.net/manpages/shorewall-tunnels.html
 #
 ###############################################################################
-#TYPE			ZONE		GATEWAY			GATEWAY_ZONE
-{%- for tunnels in salt['pillar.get']('shorewall:tunnels', {}) %}
-{# skip if ip version does not match #}
-{%-   if tunnels.ipv is defined and tunnels.ipv != ipv %}{% continue %}{%endif %}
-
-{%- if tunnels is string %}
-{{ tunnels }}
-{%- else %}
-# {{ tunnels.get('comment', '') }}
-{{ tunnels.get('type') }}  {{ tunnels.get('zone', '-') }}  {{ tunnels.get('gateway', '-') }}  {{ tunnels.get('gw_zones', '-') }}
-{%- endif %}
+{{ "{:<15} {:<10} {:<20} {:<10}".format(
+'#TYPE',
+'ZONE',
+'GATEWAY',
+'GW_ZONE'
+) }}
+{%- for id, tunnel in salt['pillar.get']('shorewall:tunnels', {})|dictsort -%}
+{%-   if tunnel.ipv is defined and ipv not in tunnel.ipv -%}{%- continue -%}{%- endif -%}
+{%-   if tunnel is string %}
+{{ tunnel }}
+{%-   else %}
+{{ "{:<15} {:<10} {:<20} {:<10}".format(
+tunnel.type,
+tunnel.zone|default('-'),
+tunnel.gateway|default('-'),
+tunnel.gw_zone|default('-')
+) }}	# [ID:{{ id }}] {{ tunnel.comment|default('') }}
+{%-   endif %}
 {%- endfor %}

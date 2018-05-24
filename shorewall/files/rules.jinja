@@ -8,32 +8,61 @@
 # http://www.shorewall.net/manpages/shorewall-rules.html
 #
 ##############################################################################################################################################################
-#ACTION		SOURCE		DEST		PROTO	DPORT	SPORT	ORIGDEST	RATE	USER	MARK	CONNLIMIT	TIME	HEADERS	SWITCH	HELPER
-{%- if pkg_version|float() >= 4.6 %}
-  {% set section = '?SECTION' %}
-  {% set sections = ['ALL', 'NEW', 'ESTABLISHED', 'RELATED', 'INVALID', 'UNTRACKED'] %}
-{%- else %}
-  {% set section = 'SECTION' %}
-  {% set sections = ['ALL', 'NEW', 'ESTABLISHED', 'RELATED'] %}
-{%- endif %}
+{{ "{:<20}  {:<22} {:<22} {:<10} {:<30} {:<20} {:<20} {:<10} {:<15} {:<8} {:<15} {:<15} {:<15} {:<15} {:<15}".format(
+'#ACTION',
+'SOURCE',
+'DEST',
+'PROTO',
+'DPORT',
+'SPORT',
+'ORIGINALDEST',
+'RATELIMIT',
+'USERGROUP',
+'MARK',
+'CONNLIMIT',
+'TIME',
+'HEADERS',
+'SWITCH',
+'HELPER'
+) }}
+{%- if pkg_version|float() >= 4.6 -%}
+  {%- set section = '?SECTION' -%}
+  {%- set sections = ['ALL', 'ESTABLISHED', 'RELATED', 'INVALID', 'UNTRACKED', 'NEW'] -%}
+{%- else -%}
+  {%- set section = 'SECTION' -%}
+  {%- set sections = ['ALL', 'ESTABLISHED', 'RELATED', 'NEW'] -%}
+{%- endif -%}
 
-{%- for name in sections %}
-{%-   set rules = salt['pillar.get']('shorewall:rules:' + name.lower(), []) -%}
-{%-   if not rules -%}{%- continue -%}{%- endif %}
+{%- for name in sections -%}
+{%-   set rules = salt['pillar.get']('shorewall:rules:' + name.lower(), {}) -%}
+{%-   if rules is defined and rules %}
 
-### START OF SECTION {{ name }}
 {{ section }} {{ name }}
-{%-   for rule in rules %}
-{#      skip if ip version does not match #}
-{%-     if rule.ipv is defined and rule.ipv != ipv -%}{%- continue -%}{%- endif -%}
-{%-     if rule is string %}
+{%-     for id, rule in rules|dictsort %}
+{%-       if rule.action is not defined -%}{%- continue -%}{%- endif -%}
+{%-       if rule.ipv is defined and ipv not in rule.ipv -%}{%- continue -%}{%- endif -%}
+{%-       if rule is string %}
 {{ rule }}
-{%-     else %}
-# {{ rule.get('comment', '') }}
-{{ rule.get('action') }}  {{ rule.get('source', 'none') }}  {{ rule.get('dest', 'none') }}  {{ rule.get('proto', '-') }}  {{ rule.get('dport', '-') }}  {{ rule.get('sport', '-') }}  {{ rule.get('originaldest', '-') }}  {{ rule.get('ratelimit', '-') }}  {{ rule.get('usergroup', '-') }}  {{ rule.get('mark', '-') }}  {{ rule.get('connlimit', '-') }}  {{ rule.get('time', '-') }}  {{ rule.get('headers', '-') }}  {{ rule.get('switch', '') }}
-{%-     endif -%}
-{%-   endfor %}
-### END OF SECTION {{ name }}
-
-{%- endfor -%}
+{%-       else %}
+{{ "{:<20}  {:<22} {:<22} {:<10} {:<30} {:<20} {:<20} {:<10} {:<15} {:<8} {:<15} {:<15} {:<15} {:<15} {:<15}".format(
+rule.action,
+rule.source|default('none'),
+rule.dest|default('none'),
+rule.proto|default('-'),
+rule.dport|default('-'),
+rule.sport|default('-'),
+rule.originaldest|default('-'),
+rule.ratelimit|default('-'),
+rule.usergroup|default('-'),
+rule.mark|default('-'),
+rule.connlimit|default('-'),
+rule.time|default('-'),
+rule.headers|default('-'),
+rule.switch|default('-'),
+rule.helper|default('-')
+) }}	# [ID:{{ id }}] {{ rule.comment|default('') }}
+{%-       endif -%}
+{%-     endfor %}
+{%-   endif -%} 
+{% endfor -%}
 

@@ -1,175 +1,171 @@
-shorewall:
-  etcdefault:
-    startup: 1
-    wait_interface: False
-    options: ''
-    startoptions: ''
-    restartoptions: ''
-    initlog: '/dev/null'
-    safestop: 0
+# vim: expandtab ts=2 sw=2 softtabstop=2
 
-  ipv: # omit means 4 only. This controls wether shorewall or shorewall and shorewall6 is installed.
-    - 4 # ipv4 support
-    - 6 # ipv6 support. Cant' be used without ipv4!
+# Notes:
+# - Most files uses a number as key. The number will be used for sorting and
+#   should enable you to empty them out in other pillar .sls files later
+# - The ID values used as keys are usually appended to the end of the generated
+#   lines as comments, optionally followed by any "comment" key added within
+#   that record
+# - Valid keys for all the numbered sections should be equal to the header
+#   in the generated file, just lowercased
+# - I suggest to use series for zones like 100,200,300 etc and keep
+#   related rules within those series with a bit of spacing so other ones
+#   can be added later.
+# - "ipv" keys must be an array!
+# - TEST IT FIRST!
+#
+# This should be considered a bit work in progress, but it seems to work
+# fine for me.
+
+shorewall:
+  ipv:
+    - 4
+    - 6
+
+  etcdefaults:
+    startup: 1
 
   macros:
     - macro.SaltMaster
 
   zones:
-    - name: mgmt
-      ipv: 4                        # This controls if this item is used for ipv4 and/or ipv6 shorewall. Omit for both.
-      type: ipv4
-      options:
-      in_options:
-      out_options:
-      comment:
-      interfaces:
-        $INET_IF:
-          ipv: 4
-          broadcast: detect
-          options: tcpflags,logmartians,nosmurfs
-          comment:
-        eth0:
-          ipv: 4
-          broadcast: detect
-          options: tcpflags,logmartians,nosmurfs
-          comment:
-
-  policy:
-    - source: $FW
-      dest: net
-      policy: ACCEPT
-      comment: Allow Firewall to connect to world
-    - source: net
-      dest: all
-      policy: DROP
-      loglevel: info
-    - source: all
-      dest: all
-      policy: REJECT
-      loglevel: info
-      burstlimit: 10/sec:40
-      connlimit: 40/255.255.255.0
-      comment: Reject all other connections
+    100:
+      name: inet
+      ipv: [ 4, 6 ]
+    200:
+      name: home
+      parent: inet
+      ipv: [ 4 ]
+    300:
+      name: vpn
+      ipv: [ 4 ]
 
   rules:
-    - action: SSH(ACCEPT)
+    new:
+      100:
+        source: $FW
+        dest: all
+        proto: udp
+        dport: 123
+        action: ACCEPT
+        comment: Outgoing to NTP servers
+      110:
+        source: $FW
+        dest: all
+        proto: tcp,udp
+        dport: 53
+        action: ACCEPT
+        comment: Outgoing to DNS servers
+      120:
+        source: $FW
+        dest: all
+        proto: tcp
+        dport: 22,25,80,443
+        action: ACCEPT
+        comment: Outgoing SSH, SMTP, HTTP, HTTPS
+      130:
+        source: $FW
+        dest: all
+        proto: tcp
+        dport: 20,21
+        action: ACCEPT
+        comment: Outgoing FTP
+      200:
+        source: home
+        dest: $FW
+        ipv: [ 4 ]
+        proto: tcp
+        dport: 22,80,443
+        action: ACCEPT
+        comment: 'Access from zone "home" to SSH, HTTP and HTTPS on this server'
+      300:
+        source: $FW
+        dest: inet
+        ipv: [ 4 ]
+        proto: udp
+        dport: 1194
+        action: ACCEPT
+        comment: Servers access to VPN server
+      310:
+        source: $FW
+        dest: vpn
+        ipv: [ 4 ]
+        action: SaltMaster(ACCEPT)
+        comment: Servers access to salt-master
+      320:
+        source: vpn:10.1.1.1
+        dest: $FW
+        ipv: [ 4 ]
+        action: SaltMaster(ACCEPT)
+        comment: Salt-master access to servers
+      330:
+        source: vpn:10.1.1.1
+        dest: $FW
+        ipv: [ 4 ]
+        proto: tcp
+        dport: 22
+        action: ACCEPT
+        comment: Access to SSH from salt-master server
+
+  interfaces:
+    100:
+      interface: $INET_IF
+      zone: inet
+      ipv: [ 4 ]
+      options: routefilter,logmartians,nosmurfs,dhcp
+    110:
+      interface: $INET_IF
+      zone: inet
+      ipv: [ 6 ]
+    300:
+      interface: tun8
+      zone: vpn
+      ipv: [ 4 ]
+      options: routefilter,logmartians,nosmurfs,dhcp
+
+  policy:
+    100:
+      policy: ACCEPT
+      source: $FW
+      dest: $FW
+    10000:
+      policy: REJECT
       source: all
       dest: all
-      comment: Allow SSH connections
-      ipv: 4                          # Rule for ipv4
-    - action: Ping(ACCEPT)
-      source: all
-      dest: $FW
-      comment: Allow Pings
-      ipv: 6                          # Rule for ipv6
-    - action: SaltMaster(ACCEPT)
-      source: all
-      dest: $FW
-      comment: Allow connections to saltmaster
-      # No ipv is given here          # Rule for ipv4 and ipv6
-
-  snat:
-    - action: MASQUERADE
-      source: '10.100.200.45/29'
-      dest: eth0
-      ipv: 4
+      loglevel: info
 
   stoppedrules:
-    - action: ACCEPT
-      source: '25.6.7.8'
-      dest: fw
+    300:
+      action: ACCEPT
+      ipv: [ 4 ]
+      source: $FW
+      dest: tun8
       proto: tcp
-      dport: 22
-      ipv: 4
-
-  params:
-    # you can specify a value
-    - key: "NET_BCAST"
-      value: "130.252.100.255"
-    # or a mine query to be executed
-    - key: "AUTHORIZED_SERVERS"
-      comment: Dynamic list of authorized servers
-      mine:
-        target: I@UseServer
-        function: main_ipaddr
-        expr_form: compound
-      # mine query needs a default value if no results
-      default: 127.0.0.1
-
-  tcinterfaces:
-    - name: ppp0
-      type: External
-      in_bandwidth: 50mbit
-      out_bandwidth: 10mbit
-
-  tcpri:
-    - band: 1
-      address: 1.1.1.1
-    - band: 2
-      interface: eth1
-    - band: 2
+      dport: 4505,4506
+    310:
+      action: ACCEPT
+      ipv: [ 4 ]
+      source: tun8
+      dest: $FW
+      proto: tcp
+      dport: 4505,4506
+    110:
+      action: ACCEPT
+      source: $FW
       proto: udp
-      port: 1194
-    - band: 1
-      helper: sip
+      dport: 1194,53
 
-  tcdevices:
-    - name: ppp0
-      out_bandwidth: 9500kbit
+  blrules:
+    300:
+      action: REJECT
+      source: $FW
+      ipv: [ 4 ]
+      dest: inet:10.1.1.0/24
+      comment: "Ensure traffic meant for vpn does not leak on to the internet"
 
-  tcclasses:
-    - interface: ppp0
-      mark: 1
-      rate: 300kbit
-      ceil: full
-      priority: 1
-      options: "tos=0x68/0xfc,tos=0xb8/0xfc"
-    - interface: ppp0
-      mark: 2
-      rate: full/4
-      ceil: full
-      priority: 2
-      options: "tcp-ack,tos-minimize-delay"
-    - interface: ppp0
-      mark: 3
-      rate: full/4
-      ceil: full
-      priority: 3
-    - interface: ppp0
-      mark: 4
-      rate: full/4
-      ceil: full
-      priority: 4
-      options: "default"
-    - interface: ppp0
-      mark: 5
-      rate: full/8
-      ceil: full
-      priority: 5
-
-  tcrules:
-    - action: "3:T"
-      proto: udp
-    - action: "4:T"
-      proto: tcp
-    - action: "5:T"
-      source: 192.168.1.5
-      ipv: 4
-    - action: "5:T"
-      source: fd42:1:1:1::220
-      ipv: 6
-    - action: "2:T"
-      proto: icmp
-    - action: "1:T"
-      helper: sip
-    - action: "2:T"
-      proto: tcp
-      port: 22,7740
-
-  tcrules:
-    - type: ipsec:ah
-      zone: net
-      gateway: $IPSEC_GW
-      gw_zones: 'vpn1,vpn2,vpn3'
-      comment: Racoon to remote IPsec Gateway
+  hosts:
+    100:
+      address: 10.1.33.1
+      zone: home
+      ipv: [ 4 ]
+      interface: $INET_IF

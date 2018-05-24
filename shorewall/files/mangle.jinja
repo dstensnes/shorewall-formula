@@ -13,13 +13,42 @@
 # the Netfilter/Shorewall packet marking mechanism.
 #
 ####################################################################################################################################################
-#ACTION		SOURCE		DEST		PROTO	DPORT	SPORT	USER	TEST	LENGTH	TOS	CONNBYTES	HELPER	PROBABILITY	DSCP
-
-{%- for rule in salt['pillar.get']('shorewall:mangle', []) %}
-{#- skip if ip version does not match #}
-{%-   if rule.ipv is defined and rule.ipv != ipv %}{% continue %}{% endif %}
-
-{{ rule.get('action') }}     {{ rule.get('source', '0.0.0.0/0') }}     {{ rule.get('dest', '0.0.0.0/0') }}     {{ rule.get('proto', '-') }}      {{ rule.get('port', '-') }}     {{ rule.get('sport', '-') }}     {{ rule.get('user', '-') }}     {{ rule.get('test', '-') }}     {{ rule.get('length', '-') }}     {{ rule.get('tos', '-') }}     {{ rule.get('connbytes', '-') }}     {{ rule.get('helper', '-') }}     {{ rule.get('probability', '-') }}     {{ rule.get('dscp', '-') }}     {{ rule.get('state', '') }}
-
+{{ "{:<20}  {:<22} {:<22} {:<10} {:<30} {:<20} {:<20} {:<10} {:<10} {:<8} {:<15} {:<15} {:<15} {:<15} {:<15}".format(
+'#ACTION',
+'SOURCE',
+'DEST',
+'PROTO',
+'PORT',
+'SPORT',
+'USER',
+'TEST',
+'LENGTH',
+'TOS',
+'CONNBYTES',
+'HELPER',
+'PROBABILITY',
+'DSCP',
+'STATE'
+) }}
+{%- for id, rule in salt['pillar.get']('shorewall:mangle', {})|dictsort -%}
+{%-   if rule.action is not defined -%}{%- continue -%}{%- endif -%}
+{%-   if rule.ipv is defined and ipv not in rule.ipv -%}{%- continue -%}{%- endif %}
+{{ "{:<20}  {:<22} {:<22} {:<10} {:<30} {:<20} {:<20} {:<10} {:<10} {:<8} {:<15} {:<15} {:<15} {:<15} {:<15}".format(
+rule.action,
+rule.source|default('0.0.0.0/0'),
+rule.dest|default('0.0.0.0/0'),
+rule.proto|default('-'),
+rule.port|default('-'),
+rule.sport|default('-'),
+rule.user|default('-'),
+rule.test|default('-'),
+rule.length|default('-'),
+rule.tos|default('-'),
+rule.connbytes|default('-'),
+rule.helper|default('-'),
+rule.probability|default('-'),
+rule.dscp|default('-'),
+rule.state|default('')
+)}} # [ID:{{ id }}] {{ rule.comment|default('') }}
 {%- endfor %}
 

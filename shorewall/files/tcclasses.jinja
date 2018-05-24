@@ -7,13 +7,23 @@
 # See http://shorewall.net/traffic_shaping.htm for additional information.
 #
 ###############################################################################
-#INTERFACE	MARK	RATE		CEIL		PRIO	OPTIONS
-
-{%- for rule in salt['pillar.get']('shorewall:tcclasses', {}) %}
-{#- skip if ip version does not match #}
-{%-   if rule.ipv is defined and rule.ipv != ipv %}{% continue %}{% endif %}
-
-{{ rule.get('interface') }}     {{ rule.get('mark') }}     {{ rule.get('rate') }}     {{ rule.get('ceil', 'full') }}      {{ rule.get('priority') }}     {{ rule.get('options', '') }}
-
+{{ "{:<15} {:<8} {:<15} {:<15} {:<10} {:<25}".format(
+'#INTERFACE',
+'MARK',
+'RATE',
+'CEIL',
+'PRIORITY',
+'OPTIONS'
+) }}
+{%- for id, rule in salt['pillar.get']('shorewall:tcclasses', {})|dictsort %}
+{%-   if rule.ipv is defined and ipv not in rule.ipv -%}{%- continue -%}{%- endif %}
+{{ "{:<15} {:<8} {:<15} {:<15} {:<10} {:<25}".format(
+rule.interface,
+rule.mark,
+rule.rate,
+rule.ceil|default('full'),
+rule.priority|default('-'),
+rule.options|default('-')
+) }}	# [ID:{{ id }}] {{ rule.comment|default('') }}
 {%- endfor %}
 

@@ -8,23 +8,22 @@
 # http://www.shorewall.net/manpages/shorewall-interfaces.html
 #
 ###############################################################################
-#ZONE		INTERFACE		OPTIONS
-{%- if pkg_version|float() >= 4.6 %}
+{{ "{:<8} {:<18} {:<50}".format(
+'#ZONE',
+'INTERFACE',
+'OPTIONS'
+) }}
+{%- if pkg_version|float() >= 4.6 -%}
   {% set format = '?FORMAT' -%}
 {%- else -%}
   {% set format = 'FORMAT' -%}
 {%- endif %}
 {{ format }} 2
-{%- for zone in salt['pillar.get']('shorewall:zones', []) -%}
-{%-   if zone.name is not defined -%}{%- continue -%}{%- endif -%}
-{#    skip if ip version does not match #}
-{%-   if zone.ipv is defined and zone.ipv != ipv -%}{%- continue -%}{%-endif -%}
-{%-   for interface in zone.get('interfaces', []) -%}
-{#      skip if ip version does not match #}
-{%-     if interface.ipv is defined and interface.ipv != ipv -%}{%- continue -%}{%- endif %}
-
-# {{ interface.name }}
-# {{ interface.comment if interface.comment is defined else '' }}
-{{ zone.name }}  {{ interface.name }}  {{ interface.get('options', '') }}
-{%-   endfor %}
+{%- for id, ifdata in salt['pillar.get']('shorewall:interfaces', {})|dictsort -%}
+{%-   if ifdata.ipv is defined and ipv not in ifdata.ipv -%}{%- continue -%}{%- endif %}
+{{ "{:<8} {:<18} {:<50}".format(
+ifdata.zone,
+ifdata.interface,
+ifdata.options|default('')
+) }} # [ID:{{id}}] {{ ifdata.comment|default('') }}
 {%- endfor %}
