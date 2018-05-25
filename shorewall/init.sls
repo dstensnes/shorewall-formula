@@ -30,7 +30,7 @@ shorewall_v{{ v }}:
   file.replace:
     - backup: True
     - pattern: '^LOGFORMAT=.*$'
-    - repl: 'LOGFORMAT="SFW:%s:%s:%d:"'
+    - repl: 'LOGFORMAT="SFW:%s:%d:%s:"'
 
 # Create config files
 {%-    for config in map.config_files %}
