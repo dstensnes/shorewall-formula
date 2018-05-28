@@ -18,19 +18,23 @@
 {%- endif %}
 
 # Install required packages
-shorewall_v{{ v }}:
+{{ name }}:
   pkg:
     - installed
     - name: {{ pkg }}
   service.running:
     - name: {{ service }}
     - enable: True
+    - require:
+        - pkg: {{ name }}
 
-/etc/shorewall/shorewall.conf:
+/etc/shorewall{{ '' if v == 4 else v }}/shorewall{{ '' if v == 4 else v }}.conf:
   file.replace:
     - backup: True
     - pattern: '^LOGFORMAT=.*$'
-    - repl: 'LOGFORMAT="SFW:%s:%d:%s:"'
+    - repl: 'LOGFORMAT="SFW:{{v}}:%s:%d:%s:"'
+    - watch_in:
+      - service: {{ name }}
 
 # Create config files
 {%-    for config in map.config_files %}
